@@ -3,7 +3,7 @@ const helmet = require("helmet");
 const cors = require("cors");
 const bcrypt = require("bcryptjs");
 
-const Users = require("./users/users-model.js");
+const db = require("./data/dbMethod.js");
 
 const server = express();
 
@@ -32,7 +32,7 @@ server.post("/api/register", async (req, res) => {
     const hash = bcrypt.hashSync(credentials.password, 12); // 2 ^ n
     //ovverride user.password with hash
     credentials.password = hash;
-    const newUser = await Users.add(credentials);
+    const newUser = await db.add(credentials);
     if (newUser) {
       res.status(201).json(newUser);
     } else {
@@ -48,7 +48,7 @@ server.post("/api/register", async (req, res) => {
 server.post("/api/login", async (req, res) => {
   try {
     const { username, password } = req.body;
-    Users.findBy({ username })
+    db.findBy({ username })
       .first()
       .then(user => {
         // check that passwords match`
@@ -75,7 +75,7 @@ function authorize(req, res, next) {
     return res.status(401).json({ message: "Invalid Credentials" });
   }
 
-  Users.findBy({ username })
+  db.findBy({ username })
     .first()
     .then(user => {
       if (user && bcrypt.compareSync(password, user.password)) {
@@ -93,7 +93,7 @@ function authorize(req, res, next) {
 
 server.get("/api/users", authorize, async (req, res) => {
   try {
-    Users.find().then(users => {
+    db.find().then(users => {
       res.json(users);
     });
   } catch (err) {
